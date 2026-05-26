@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pagos · Aromas y Más</title>
+
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f3efe9;color:#2b211b}
+header{background:linear-gradient(180deg,#7b5a46,#5d4333);color:white;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+h1{margin:0;font-size:24px}
+.volver{background:white;color:#5d4333;border:0;border-radius:999px;padding:10px 16px;font-weight:900}
+.contenedor{padding:18px;max-width:1000px;margin:auto}
+.card{background:white;border-radius:24px;padding:20px;margin-bottom:18px;box-shadow:0 10px 24px rgba(0,0,0,.12)}
+label{font-weight:900;margin-top:12px;display:block}
+input,select,textarea{width:100%;padding:14px;border-radius:14px;border:1px solid #cfc7bf;font-size:16px;margin-top:6px}
+textarea{min-height:80px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.botones{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+button{border:0;border-radius:16px;padding:14px 18px;font-size:16px;font-weight:900;color:white;background:#5d4333}
+.guardar{background:#5ca33f}
+.borrar{background:#c00000}
+.aviso{background:#d78a1e}
+.pendiente{border-left:7px solid #d78a1e}
+.pagado{border-left:7px solid #5ca33f;background:#f5fff3}
+.dato{font-weight:700;margin:4px 0;color:#333}
+.vacio{text-align:center;font-weight:900;color:#8c674d;padding:20px}
+.resumen{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.cajaResumen{background:white;border-radius:18px;padding:16px;text-align:center;font-weight:900;box-shadow:0 8px 18px rgba(0,0,0,.09)}
+.cajaResumen span{display:block;font-size:26px;color:#5d4333;margin-top:6px}
+@media(max-width:760px){
+.grid{grid-template-columns:1fr}
+.resumen{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>💳 Pagos</h1>
+<button class="volver" onclick="location.href='index.html'">VOLVER</button>
+</header>
+
+<div class="contenedor">
+
+<div class="resumen">
+<div class="cajaResumen">Pendiente<span id="totalPendiente">0,00 €</span></div>
+<div class="cajaResumen">Pagado<span id="totalPagado">0,00 €</span></div>
+<div class="cajaResumen">Pagos<span id="numeroPagos">0</span></div>
+</div>
+
+<div class="card">
+<h2>Nuevo pago</h2>
+
+<div class="grid">
+<div>
+<label>Proveedor</label>
+<select id="proveedor">
+<option value="">Seleccionar proveedor</option>
+</select>
+</div>
+
+<div>
+<label>Fecha</label>
+<input id="fecha" type="date">
+</div>
+</div>
+
+<div class="grid">
+<div>
+<label>Importe</label>
+<input id="importe" type="number" step="0.01" placeholder="0.00">
+</div>
+
+<div>
+<label>Estado</label>
+<select id="estado">
+<option>Pendiente</option>
+<option>Pagado</option>
+</select>
+</div>
+</div>
+
+<label>Método de pago</label>
+<select id="metodo">
+<option value="">Seleccionar</option>
+<option>Banco</option>
+<option>Tarjeta</option>
+<option>Efectivo</option>
+<option>Transferencia</option>
+<option>A cuenta</option>
+<option>Otro</option>
+</select>
+
+<label>Observaciones</label>
+<textarea id="observaciones" placeholder="Notas del pago"></textarea>
+
+<div class="botones">
+<button class="guardar" onclick="guardarPago()">GUARDAR</button>
+<button onclick="limpiarFormulario()">LIMPIAR</button>
+</div>
+</div>
+
+<div class="card">
+<h2>Listado de pagos</h2>
+<div id="lista"></div>
+</div>
+
+</div>
+
+<script>
+let editandoId = null;
+
+function dinero(n){
+return Number(n || 0).toLocaleString("es-ES",{style:"currency",currency:"EUR"});
+}
+
+function hoyISO(){
+return new Date().toISOString().slice(0,10);
+}
+
+function leerProveedores(){
+return JSON.parse(localStorage.getItem("aromas_proveedores") || "[]");
+}
+
+function leerPagos(){
+return JSON.parse(localStorage.getItem("aromas_pagos") || "[]");
+}
+
+function guardarPagos(datos){
+localStorage.setItem("aromas_pagos", JSON.stringify(datos));
+}
+
+function cargarProveedores(){
+const select = document.getElementById("proveedor");
+const proveedores = leerProveedores();
+
+select.innerHTML = `<option value="">Seleccionar proveedor</option>` + proveedores.map(p => `
+<option value="${p.nombre}">${p.nombre}</option>
+`).join("");
+}
+
+function guardarPago(){
+
+const pago = {
+id: editandoId || Date.now(),
+proveedor: document.getElementById("proveedor").value,
+fecha: document.getElementById("fecha").value || hoyISO(),
+importe: Number(document.getElementById("importe").value || 0),
+estado: document.getElementById("estado").value,
+metodo: document.getElementById("metodo").value,
+observaciones: document.getElementById("observaciones").value.trim(),
+fechaRegistro: new Date().toLocaleString("es-ES")
+};
+
+if(!pago.proveedor){
+alert("Selecciona proveedor.");
+return;
+}
+
+if(pago.importe <= 0){
+alert("Pon un importe.");
+return;
+}
+
+let datos = leerPagos();
+
+if(editandoId){
+datos = datos.map(p => p.id === editandoId ? pago : p);
+}else{
+datos.push(pago);
+}
+
+guardarPagos(datos);
+limpiarFormulario();
+pintarPagos();
+}
+
+function editarPago(id){
+
+const p = leerPagos().find(x => x.id === id);
+if(!p) return;
+
+editandoId = id;
+
+document.getElementById("proveedor").value = p.proveedor || "";
+document.getElementById("fecha").value = p.fecha || hoyISO();
+document.getElementById("importe").value = p.importe || "";
+document.getElementById("estado").value = p.estado || "Pendiente";
+document.getElementById("metodo").value = p.metodo || "";
+document.getElementById("observaciones").value = p.observaciones || "";
+
+window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function borrarPago(id){
+
+if(!confirm("¿Borrar este pago?")) return;
+
+const datos = leerPagos().filter(p => p.id !== id);
+guardarPagos(datos);
+pintarPagos();
+}
+
+function marcarPagado(id){
+
+const datos = leerPagos().map(p => {
+if(p.id === id){
+p.estado = "Pagado";
+p.fechaPago = new Date().toLocaleString("es-ES");
+}
+return p;
+});
+
+guardarPagos(datos);
+pintarPagos();
+}
+
+function marcarPendiente(id){
+
+const datos = leerPagos().map(p => {
+if(p.id === id){
+p.estado = "Pendiente";
+delete p.fechaPago;
+}
+return p;
+});
+
+guardarPagos(datos);
+pintarPagos();
+}
+
+function limpiarFormulario(){
+
+editandoId = null;
+
+document.getElementById("proveedor").value = "";
+document.getElementById("fecha").value = hoyISO();
+document.getElementById("importe").value = "";
+document.getElementById("estado").value = "Pendiente";
+document.getElementById("metodo").value = "";
+document.getElementById("observaciones").value = "";
+}
+
+function pintarResumen(datos){
+
+const pendiente = datos
+.filter(p => p.estado === "Pendiente")
+.reduce((s,p)=>s + Number(p.importe || 0),0);
+
+const pagado = datos
+.filter(p => p.estado === "Pagado")
+.reduce((s,p)=>s + Number(p.importe || 0),0);
+
+document.getElementById("totalPendiente").textContent = dinero(pendiente);
+document.getElementById("totalPagado").textContent = dinero(pagado);
+document.getElementById("numeroPagos").textContent = datos.length;
+}
+
+function claseEstado(estado){
+return estado === "Pagado" ? "pagado" : "pendiente";
+}
+
+function pintarPagos(){
+
+const lista = document.getElementById("lista");
+const datos = leerPagos().sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
+
+pintarResumen(datos);
+
+if(datos.length === 0){
+lista.innerHTML = "<div class='vacio'>No hay pagos todavía.</div>";
+return;
+}
+
+lista.innerHTML = datos.map(p => `
+<div class="card ${claseEstado(p.estado)}">
+<h3>${p.proveedor}</h3>
+<div class="dato">📅 Fecha: ${p.fecha || ""}</div>
+<div class="dato">💶 Importe: ${dinero(p.importe)}</div>
+<div class="dato">📌 Estado: ${p.estado}</div>
+<div class="dato">💳 Método: ${p.metodo || "Sin método"}</div>
+<div class="dato">📝 ${p.observaciones || "Sin observaciones"}</div>
+<div class="dato">Registro: ${p.fechaRegistro || ""}</div>
+${p.fechaPago ? `<div class="dato">✅ Pagado el: ${p.fechaPago}</div>` : ""}
+
+<div class="botones">
+<button onclick="editarPago(${p.id})">EDITAR</button>
+<button class="guardar" onclick="marcarPagado(${p.id})">PAGADO</button>
+<button class="aviso" onclick="marcarPendiente(${p.id})">PENDIENTE</button>
+<button class="borrar" onclick="borrarPago(${p.id})">BORRAR</button>
+</div>
+</div>
+`).join("");
+}
+
+document.getElementById("fecha").value = hoyISO();
+cargarProveedores();
+pintarPagos();
+</script>
+
+</body>
+</html>
