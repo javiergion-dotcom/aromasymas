@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artículos · Aromas y Más</title>
+
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f3efe9;color:#2b211b}
+header{background:linear-gradient(180deg,#7b5a46,#5d4333);color:white;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+h1{margin:0;font-size:24px}
+.volver{background:white;color:#5d4333;border:0;border-radius:999px;padding:10px 16px;font-weight:900}
+.contenedor{padding:18px;max-width:1000px;margin:auto}
+.card{background:white;border-radius:24px;padding:20px;margin-bottom:18px;box-shadow:0 10px 24px rgba(0,0,0,.12)}
+label{font-weight:900;margin-top:12px;display:block}
+input,select,textarea{width:100%;padding:14px;border-radius:14px;border:1px solid #cfc7bf;font-size:16px;margin-top:6px}
+textarea{min-height:80px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.botones{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+button{border:0;border-radius:16px;padding:14px 18px;font-size:16px;font-weight:900;color:white;background:#5d4333}
+.guardar{background:#5ca33f}
+.borrar{background:#c00000}
+.aviso{background:#d78a1e}
+.articulo{border-left:7px solid #5d8091}
+.articulo.alerta{border-left-color:#c00000;background:#fff5f5}
+.articulo h3{margin:0 0 8px;color:#5d4333}
+.dato{font-weight:700;margin:4px 0;color:#333}
+.vacio{text-align:center;font-weight:900;color:#8c674d;padding:20px}
+.alertaTexto{color:#c00000;font-weight:900;margin-top:8px}
+.resumen{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.cajaResumen{background:white;border-radius:18px;padding:16px;text-align:center;font-weight:900;box-shadow:0 8px 18px rgba(0,0,0,.09)}
+.cajaResumen span{display:block;font-size:26px;color:#5d4333;margin-top:6px}
+@media(max-width:760px){
+.grid{grid-template-columns:1fr}
+.resumen{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>📦 Artículos</h1>
+<button class="volver" onclick="location.href='index.html'">VOLVER</button>
+</header>
+
+<div class="contenedor">
+
+<div class="resumen">
+<div class="cajaResumen">Artículos<span id="totalArticulos">0</span></div>
+<div class="cajaResumen">Avisos stock<span id="totalAvisos">0</span></div>
+<div class="cajaResumen">Valor compra<span id="valorCompra">0,00 €</span></div>
+</div>
+
+<div class="card">
+<h2>Nuevo artículo</h2>
+
+<div class="grid">
+<div>
+<label>Nombre artículo</label>
+<input id="nombre" placeholder="Nombre del artículo">
+</div>
+
+<div>
+<label>Proveedor</label>
+<select id="proveedor">
+<option value="">Sin proveedor</option>
+</select>
+</div>
+</div>
+
+<div class="grid">
+<div>
+<label>Precio compra</label>
+<input id="precioCompra" type="number" step="0.01" placeholder="0.00">
+</div>
+
+<div>
+<label>Precio venta</label>
+<input id="precioVenta" type="number" step="0.01" placeholder="0.00">
+</div>
+</div>
+
+<div class="grid">
+<div>
+<label>Stock actual</label>
+<input id="stockActual" type="number" step="1" placeholder="0">
+</div>
+
+<div>
+<label>Stock mínimo</label>
+<input id="stockMinimo" type="number" step="1" placeholder="Avisar cuando llegue aquí">
+</div>
+</div>
+
+<label>Código de barras / referencia opcional</label>
+<input id="codigoBarras" placeholder="Código de barras o referencia">
+
+<label>Observaciones</label>
+<textarea id="observaciones" placeholder="Notas del artículo"></textarea>
+
+<div class="botones">
+<button class="guardar" onclick="guardarArticulo()">GUARDAR</button>
+<button onclick="limpiarFormulario()">LIMPIAR</button>
+</div>
+</div>
+
+<div class="card">
+<h2>Listado de artículos</h2>
+<div id="lista"></div>
+</div>
+
+</div>
+
+<script>
+let editandoId = null;
+
+function dinero(n){
+return Number(n || 0).toLocaleString("es-ES",{style:"currency",currency:"EUR"});
+}
+
+function leerArticulos(){
+return JSON.parse(localStorage.getItem("aromas_articulos") || "[]");
+}
+
+function guardarArticulos(datos){
+localStorage.setItem("aromas_articulos", JSON.stringify(datos));
+}
+
+function leerProveedores(){
+return JSON.parse(localStorage.getItem("aromas_proveedores") || "[]");
+}
+
+function cargarProveedores(){
+const select = document.getElementById("proveedor");
+const proveedores = leerProveedores();
+
+select.innerHTML = `<option value="">Sin proveedor</option>` + proveedores.map(p => `
+<option value="${p.nombre}">${p.nombre}</option>
+`).join("");
+}
+
+function tieneAvisoStock(a){
+const actual = Number(a.stockActual || 0);
+const minimo = Number(a.stockMinimo || 0);
+
+if(minimo <= 0) return false;
+return actual <= minimo;
+}
+
+function guardarArticulo(){
+
+const articulo = {
+id: editandoId || Date.now(),
+nombre: document.getElementById("nombre").value.trim(),
+proveedor: document.getElementById("proveedor").value,
+precioCompra: Number(document.getElementById("precioCompra").value || 0),
+precioVenta: Number(document.getElementById("precioVenta").value || 0),
+stockActual: Number(document.getElementById("stockActual").value || 0),
+stockMinimo: Number(document.getElementById("stockMinimo").value || 0),
+codigoBarras: document.getElementById("codigoBarras").value.trim(),
+observaciones: document.getElementById("observaciones").value.trim(),
+fecha: new Date().toLocaleString("es-ES")
+};
+
+if(!articulo.nombre){
+alert("Pon el nombre del artículo.");
+return;
+}
+
+let datos = leerArticulos();
+
+if(editandoId){
+datos = datos.map(a => a.id === editandoId ? articulo : a);
+}else{
+datos.push(articulo);
+}
+
+guardarArticulos(datos);
+limpiarFormulario();
+pintarArticulos();
+}
+
+function editarArticulo(id){
+
+const a = leerArticulos().find(x => x.id === id);
+if(!a) return;
+
+editandoId = id;
+
+document.getElementById("nombre").value = a.nombre || "";
+document.getElementById("proveedor").value = a.proveedor || "";
+document.getElementById("precioCompra").value = a.precioCompra || "";
+document.getElementById("precioVenta").value = a.precioVenta || "";
+document.getElementById("stockActual").value = a.stockActual || "";
+document.getElementById("stockMinimo").value = a.stockMinimo || "";
+document.getElementById("codigoBarras").value = a.codigoBarras || "";
+document.getElementById("observaciones").value = a.observaciones || "";
+
+window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function borrarArticulo(id){
+
+if(!confirm("¿Borrar este artículo?")) return;
+
+const datos = leerArticulos().filter(a => a.id !== id);
+guardarArticulos(datos);
+pintarArticulos();
+}
+
+function limpiarFormulario(){
+
+editandoId = null;
+
+document.getElementById("nombre").value = "";
+document.getElementById("proveedor").value = "";
+document.getElementById("precioCompra").value = "";
+document.getElementById("precioVenta").value = "";
+document.getElementById("stockActual").value = "";
+document.getElementById("stockMinimo").value = "";
+document.getElementById("codigoBarras").value = "";
+document.getElementById("observaciones").value = "";
+}
+
+function pintarResumen(datos){
+
+const total = datos.length;
+const avisos = datos.filter(tieneAvisoStock).length;
+const valorCompra = datos.reduce((s,a)=>s + (Number(a.precioCompra || 0) * Number(a.stockActual || 0)),0);
+
+document.getElementById("totalArticulos").textContent = total;
+document.getElementById("totalAvisos").textContent = avisos;
+document.getElementById("valorCompra").textContent = dinero(valorCompra);
+}
+
+function pintarArticulos(){
+
+const lista = document.getElementById("lista");
+const datos = leerArticulos();
+
+pintarResumen(datos);
+
+if(datos.length === 0){
+lista.innerHTML = "<div class='vacio'>No hay artículos todavía.</div>";
+return;
+}
+
+lista.innerHTML = datos.map(a => {
+
+const alerta = tieneAvisoStock(a);
+
+return `
+<div class="card articulo ${alerta ? "alerta" : ""}">
+<h3>${a.nombre}</h3>
+<div class="dato">🚚 Proveedor: ${a.proveedor || "Sin proveedor"}</div>
+<div class="dato">💶 Compra: ${dinero(a.precioCompra)}</div>
+<div class="dato">🏷️ Venta: ${dinero(a.precioVenta)}</div>
+<div class="dato">📦 Stock actual: ${a.stockActual || 0}</div>
+<div class="dato">⚠️ Stock mínimo: ${a.stockMinimo || 0}</div>
+<div class="dato">🔖 Código / referencia: ${a.codigoBarras || "Sin código"}</div>
+<div class="dato">📝 ${a.observaciones || "Sin observaciones"}</div>
+<div class="dato">📅 ${a.fecha || ""}</div>
+
+${alerta ? `<div class="alertaTexto">⚠️ AVISO: este artículo llegó al stock mínimo. Hay que pedir.</div>` : ""}
+
+<div class="botones">
+<button onclick="editarArticulo(${a.id})">EDITAR</button>
+<button class="borrar" onclick="borrarArticulo(${a.id})">BORRAR</button>
+</div>
+</div>
+`;
+
+}).join("");
+}
+
+cargarProveedores();
+pintarArticulos();
+</script>
+
+</body>
+</html>
