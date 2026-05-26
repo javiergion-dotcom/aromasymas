@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Aromas y Más</title>
+
+<style>
+
+*{
+box-sizing:border-box;
+-webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+margin:0;
+padding:0;
+width:100%;
+min-height:100%;
+font-family:Arial,Helvetica,sans-serif;
+background:#f3efe9;
+overflow-x:hidden;
+}
+
+/* ===== HEADER ===== */
+
+header{
+background:linear-gradient(180deg,#7b5a46 0%,#5d4333 100%);
+color:white;
+padding:18px 24px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+box-shadow:0 6px 14px rgba(0,0,0,.22);
+}
+
+.header-left{
+display:flex;
+flex-direction:column;
+}
+
+.titulo{
+font-size:28px;
+font-weight:900;
+letter-spacing:.5px;
+}
+
+.sub{
+font-size:14px;
+opacity:.9;
+margin-top:4px;
+font-weight:700;
+}
+
+#hora{
+font-size:16px;
+font-weight:700;
+}
+
+/* ===== FRANJA ===== */
+
+.franja{
+background:#ffffff;
+padding:12px 22px;
+font-size:15px;
+font-weight:700;
+color:#5d4333;
+border-bottom:1px solid rgba(0,0,0,.06);
+}
+
+/* ===== PANEL ===== */
+
+.panel{
+padding:26px;
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:26px;
+}
+
+/* ===== BOTONES ===== */
+
+.boton{
+position:relative;
+min-height:150px;
+border-radius:28px;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+text-align:center;
+color:white;
+font-size:22px;
+font-weight:900;
+cursor:pointer;
+user-select:none;
+padding:20px;
+box-shadow:
+inset 0 3px 8px rgba(255,255,255,.22),
+inset 0 -10px 18px rgba(0,0,0,.14),
+0 16px 28px rgba(0,0,0,.22);
+transition:all .08s ease;
+}
+
+.boton:active{
+transform:translateY(8px) scale(.96);
+}
+
+.marron{
+background:linear-gradient(180deg,#b78b68 0%,#8c674d 100%);
+}
+
+.verde{
+background:linear-gradient(180deg,#89c768 0%,#5ca33f 100%);
+}
+
+.azul{
+background:linear-gradient(180deg,#8ab3c7 0%,#5d8091 100%);
+}
+
+.naranja{
+background:linear-gradient(180deg,#efb25d 0%,#d78a1e 100%);
+}
+
+.icono{
+font-size:46px;
+margin-bottom:14px;
+}
+
+/* ===== BLOQUE CENTRAL ===== */
+
+.bloque{
+width:92%;
+max-width:950px;
+margin:10px auto 44px auto;
+background:white;
+border-radius:34px;
+padding:38px 26px;
+text-align:center;
+box-shadow:0 12px 30px rgba(0,0,0,.12);
+}
+
+.nombre{
+font-size:42px;
+font-weight:900;
+color:#5d4333;
+margin-bottom:12px;
+}
+
+.frase{
+font-size:24px;
+font-weight:800;
+color:#111;
+line-height:1.4;
+margin-bottom:22px;
+}
+
+.texto{
+max-width:760px;
+margin:auto;
+font-size:18px;
+line-height:1.8;
+font-weight:600;
+color:#333;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media(max-width:900px){
+
+.panel{
+grid-template-columns:repeat(2,1fr);
+gap:18px;
+padding:18px;
+}
+
+.boton{
+min-height:130px;
+font-size:18px;
+border-radius:24px;
+}
+
+.icono{
+font-size:40px;
+}
+
+.nombre{
+font-size:34px;
+}
+
+.frase{
+font-size:20px;
+}
+
+.texto{
+font-size:16px;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+
+<div class="header-left">
+<div class="titulo">Aromas y Más</div>
+<div class="sub">Organización simple para pequeños comercios</div>
+</div>
+
+<div id="hora"></div>
+
+</header>
+
+<div class="franja">
+Todo el control de tu tienda, sin complicaciones.
+</div>
+
+<div class="panel">
+
+<div class="boton marron" onclick="abrir('proveedores.html')">
+<div class="icono">🚚</div>
+<div>PROVEEDORES</div>
+</div>
+
+<div class="boton azul" onclick="abrir('articulos.html')">
+<div class="icono">📦</div>
+<div>ARTÍCULOS</div>
+</div>
+
+<div class="boton verde" onclick="abrir('pedidos.html')">
+<div class="icono">📝</div>
+<div>PEDIDOS</div>
+</div>
+
+<div class="boton verde" onclick="abrir('pagos.html')">
+<div class="icono">💳</div>
+<div>PAGOS</div>
+</div>
+
+<div class="boton naranja" onclick="abrir('ventas.html')">
+<div class="icono">💰</div>
+<div>VENTAS</div>
+</div>
+
+<div class="boton azul" onclick="abrir('calendario.html')">
+<div class="icono">📅</div>
+<div>CALENDARIO</div>
+</div>
+
+<div class="boton marron" onclick="abrir('historico.html')">
+<div class="icono">📁</div>
+<div>HISTÓRICO</div>
+</div>
+
+</div>
+
+<div class="bloque">
+
+<div class="nombre">
+Aromas y Más
+</div>
+
+<div class="frase">
+La organización también puede ser sencilla.
+</div>
+
+<div class="texto">
+Controla artículos, pagos, pedidos y ventas de forma rápida y clara.
+Un sistema pensado para pequeños comercios que necesitan orden y tranquilidad en el día a día.
+</div>
+
+</div>
+
+<script>
+
+function reloj(){
+
+const d = new Date();
+
+document.getElementById("hora").innerHTML =
+d.toLocaleDateString("es-ES") +
+" · " +
+d.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+
+}
+
+setInterval(reloj,1000);
+reloj();
+
+function abrir(destino){
+
+try{
+if(navigator.vibrate){
+navigator.vibrate(20);
+}
+}catch(e){}
+
+setTimeout(function(){
+window.location.href = destino;
+},70);
+
+}
+
+</script>
+
+</body>
+</html>
