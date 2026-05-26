@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pedidos · Aromas y Más</title>
+
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f3efe9;color:#2b211b}
+header{background:linear-gradient(180deg,#7b5a46,#5d4333);color:white;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+h1{margin:0;font-size:24px}
+.volver{background:white;color:#5d4333;border:0;border-radius:999px;padding:10px 16px;font-weight:900}
+.contenedor{padding:18px;max-width:1050px;margin:auto}
+.card{background:white;border-radius:24px;padding:20px;margin-bottom:18px;box-shadow:0 10px 24px rgba(0,0,0,.12)}
+label{font-weight:900;margin-top:12px;display:block}
+input,select,textarea{width:100%;padding:14px;border-radius:14px;border:1px solid #cfc7bf;font-size:16px;margin-top:6px}
+textarea{min-height:80px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.botones{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+button{border:0;border-radius:16px;padding:14px 18px;font-size:16px;font-weight:900;color:white;background:#5d4333}
+.guardar{background:#5ca33f}
+.borrar{background:#c00000}
+.estadoPendiente{border-left:7px solid #d78a1e}
+.estadoRecibido{border-left:7px solid #5ca33f}
+.estadoCancelado{border-left:7px solid #c00000}
+.dato{font-weight:700;margin:4px 0;color:#333}
+.vacio{text-align:center;font-weight:900;color:#8c674d;padding:20px}
+.resumen{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.cajaResumen{background:white;border-radius:18px;padding:16px;text-align:center;font-weight:900;box-shadow:0 8px 18px rgba(0,0,0,.09)}
+.cajaResumen span{display:block;font-size:26px;color:#5d4333;margin-top:6px}
+.lineaPedido{background:#f7f2ec;border-radius:16px;padding:14px;margin-top:12px}
+@media(max-width:760px){
+.grid{grid-template-columns:1fr}
+.resumen{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>📝 Pedidos</h1>
+<button class="volver" onclick="location.href='index.html'">VOLVER</button>
+</header>
+
+<div class="contenedor">
+
+<div class="resumen">
+<div class="cajaResumen">Pedidos<span id="totalPedidos">0</span></div>
+<div class="cajaResumen">Pendientes<span id="totalPendientes">0</span></div>
+<div class="cajaResumen">Total<span id="totalImporte">0,00 €</span></div>
+</div>
+
+<div class="card">
+<h2>Crear pedido</h2>
+
+<div class="grid">
+<div>
+<label>Proveedor</label>
+<select id="proveedor" onchange="filtrarArticulos()">
+<option value="">Seleccionar proveedor</option>
+</select>
+</div>
+
+<div>
+<label>Fecha</label>
+<input id="fecha" type="date">
+</div>
+</div>
+
+<div class="grid">
+<div>
+<label>Artículo</label>
+<select id="articulo">
+<option value="">Seleccionar artículo</option>
+</select>
+</div>
+
+<div>
+<label>Cantidad</label>
+<input id="cantidad" type="number" step="1" placeholder="0">
+</div>
+</div>
+
+<div class="botones">
+<button onclick="agregarLinea()">AÑADIR ARTÍCULO</button>
+</div>
+
+<div id="lineas"></div>
+
+<label>Estado del pedido</label>
+<select id="estado">
+<option>Pendiente</option>
+<option>Recibido</option>
+<option>Cancelado</option>
+</select>
+
+<label>Observaciones</label>
+<textarea id="observaciones" placeholder="Notas del pedido"></textarea>
+
+<div class="botones">
+<button class="guardar" onclick="guardarPedido()">GUARDAR PEDIDO</button>
+<button onclick="limpiarFormulario()">LIMPIAR</button>
+</div>
+</div>
+
+<div class="card">
+<h2>Histórico de pedidos</h2>
+<div id="lista"></div>
+</div>
+
+</div>
+
+<script>
+let editandoId = null;
+let lineasPedido = [];
+
+function dinero(n){
+return Number(n || 0).toLocaleString("es-ES",{style:"currency",currency:"EUR"});
+}
+
+function hoyISO(){
+return new Date().toISOString().slice(0,10);
+}
+
+function leerProveedores(){
+return JSON.parse(localStorage.getItem("aromas_proveedores") || "[]");
+}
+
+function leerArticulos(){
+return JSON.parse(localStorage.getItem("aromas_articulos") || "[]");
+}
+
+function leerPedidos(){
+return JSON.parse(localStorage.getItem("aromas_pedidos") || "[]");
+}
+
+function guardarPedidos(datos){
+localStorage.setItem("aromas_pedidos", JSON.stringify(datos));
+}
+
+function cargarProveedores(){
+const select = document.getElementById("proveedor");
+const proveedores = leerProveedores();
+
+select.innerHTML = `<option value="">Seleccionar proveedor</option>` + proveedores.map(p => `
+<option value="${p.nombre}">${p.nombre}</option>
+`).join("");
+}
+
+function filtrarArticulos(){
+const proveedor = document.getElementById("proveedor").value;
+const select = document.getElementById("articulo");
+let articulos = leerArticulos();
+
+if(proveedor){
+articulos = articulos.filter(a => a.proveedor === proveedor);
+}
+
+select.innerHTML = `<option value="">Seleccionar artículo</option>` + articulos.map(a => `
+<option value="${a.id}">${a.nombre} · ${dinero(a.precioCompra)}</option>
+`).join("");
+}
+
+function agregarLinea(){
+
+const articuloId = Number(document.getElementById("articulo").value);
+const cantidad = Number(document.getElementById("cantidad").value || 0);
+
+if(!articuloId){
+alert("Selecciona un artículo.");
+return;
+}
+
+if(cantidad <= 0){
+alert("Pon una cantidad.");
+return;
+}
+
+const articulo = leerArticulos().find(a => Number(a.id) === articuloId);
+if(!articulo){
+alert("Artículo no encontrado.");
+return;
+}
+
+const linea = {
+id: Date.now(),
+articuloId: articulo.id,
+nombre: articulo.nombre,
+precioCompra: Number(articulo.precioCompra || 0),
+cantidad: cantidad,
+total: Number(articulo.precioCompra || 0) * cantidad
+};
+
+lineasPedido.push(linea);
+
+document.getElementById("articulo").value = "";
+document.getElementById("cantidad").value = "";
+
+pintarLineas();
+}
+
+function borrarLinea(id){
+lineasPedido = lineasPedido.filter(l => l.id !== id);
+pintarLineas();
+}
+
+function pintarLineas(){
+
+const cont = document.getElementById("lineas");
+
+if(lineasPedido.length === 0){
+cont.innerHTML = "";
+return;
+}
+
+const total = lineasPedido.reduce((s,l)=>s + Number(l.total || 0),0);
+
+cont.innerHTML = `
+<h3>Artículos del pedido</h3>
+${lineasPedido.map(l => `
+<div class="lineaPedido">
+<div class="dato">📦 ${l.nombre}</div>
+<div class="dato">Cantidad: ${l.cantidad}</div>
+<div class="dato">Precio compra: ${dinero(l.precioCompra)}</div>
+<div class="dato">Total línea: ${dinero(l.total)}</div>
+<div class="botones">
+<button class="borrar" onclick="borrarLinea(${l.id})">QUITAR</button>
+</div>
+</div>
+`).join("")}
+<div class="lineaPedido">
+<strong>Total pedido: ${dinero(total)}</strong>
+</div>
+`;
+}
+
+function guardarPedido(){
+
+const proveedor = document.getElementById("proveedor").value;
+const fecha = document.getElementById("fecha").value || hoyISO();
+const estado = document.getElementById("estado").value;
+const observaciones = document.getElementById("observaciones").value.trim();
+
+if(!proveedor){
+alert("Selecciona proveedor.");
+return;
+}
+
+if(lineasPedido.length === 0){
+alert("Añade al menos un artículo.");
+return;
+}
+
+const total = lineasPedido.reduce((s,l)=>s + Number(l.total || 0),0);
+
+const pedido = {
+id: editandoId || Date.now(),
+proveedor,
+fecha,
+estado,
+lineas: lineasPedido,
+total,
+observaciones,
+fechaRegistro: new Date().toLocaleString("es-ES")
+};
+
+let datos = leerPedidos();
+
+if(editandoId){
+datos = datos.map(p => p.id === editandoId ? pedido : p);
+}else{
+datos.push(pedido);
+}
+
+guardarPedidos(datos);
+limpiarFormulario();
+pintarPedidos();
+}
+
+function editarPedido(id){
+
+const p = leerPedidos().find(x => x.id === id);
+if(!p) return;
+
+editandoId = id;
+
+document.getElementById("proveedor").value = p.proveedor || "";
+filtrarArticulos();
+
+document.getElementById("fecha").value = p.fecha || hoyISO();
+document.getElementById("estado").value = p.estado || "Pendiente";
+document.getElementById("observaciones").value = p.observaciones || "";
+
+lineasPedido = Array.isArray(p.lineas) ? p.lineas : [];
+
+pintarLineas();
+window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function borrarPedido(id){
+
+if(!confirm("¿Borrar este pedido?")) return;
+
+const datos = leerPedidos().filter(p => p.id !== id);
+guardarPedidos(datos);
+pintarPedidos();
+}
+
+function cambiarEstado(id, estado){
+
+const datos = leerPedidos().map(p => {
+if(p.id === id){
+p.estado = estado;
+}
+return p;
+});
+
+guardarPedidos(datos);
+pintarPedidos();
+}
+
+function limpiarFormulario(){
+
+editandoId = null;
+lineasPedido = [];
+
+document.getElementById("proveedor").value = "";
+document.getElementById("fecha").value = hoyISO();
+document.getElementById("articulo").innerHTML = `<option value="">Seleccionar artículo</option>`;
+document.getElementById("cantidad").value = "";
+document.getElementById("estado").value = "Pendiente";
+document.getElementById("observaciones").value = "";
+document.getElementById("lineas").innerHTML = "";
+}
+
+function claseEstado(estado){
+if(estado === "Recibido") return "estadoRecibido";
+if(estado === "Cancelado") return "estadoCancelado";
+return "estadoPendiente";
+}
+
+function pintarResumen(datos){
+
+const total = datos.length;
+const pendientes = datos.filter(p => p.estado === "Pendiente").length;
+const importe = datos.reduce((s,p)=>s + Number(p.total || 0),0);
+
+document.getElementById("totalPedidos").textContent = total;
+document.getElementById("totalPendientes").textContent = pendientes;
+document.getElementById("totalImporte").textContent = dinero(importe);
+}
+
+function pintarPedidos(){
+
+const lista = document.getElementById("lista");
+const datos = leerPedidos().sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
+
+pintarResumen(datos);
+
+if(datos.length === 0){
+lista.innerHTML = "<div class='vacio'>No hay pedidos todavía.</div>";
+return;
+}
+
+lista.innerHTML = datos.map(p => `
+<div class="card ${claseEstado(p.estado)}">
+<h3>${p.proveedor}</h3>
+<div class="dato">📅 Fecha: ${p.fecha || ""}</div>
+<div class="dato">📌 Estado: ${p.estado}</div>
+<div class="dato">💶 Total: ${dinero(p.total)}</div>
+<div class="dato">📝 ${p.observaciones || "Sin observaciones"}</div>
+<div class="dato">Registro: ${p.fechaRegistro || ""}</div>
+
+<div class="lineaPedido">
+<strong>Artículos:</strong>
+${(p.lineas || []).map(l => `
+<div>• ${l.nombre} · ${l.cantidad} ud. · ${dinero(l.total)}</div>
+`).join("")}
+</div>
+
+<div class="botones">
+<button onclick="editarPedido(${p.id})">EDITAR</button>
+<button class="guardar" onclick="cambiarEstado(${p.id}, 'Recibido')">RECIBIDO</button>
+<button class="aviso" onclick="cambiarEstado(${p.id}, 'Pendiente')">PENDIENTE</button>
+<button class="borrar" onclick="borrarPedido(${p.id})">BORRAR</button>
+</div>
+</div>
+`).join("");
+}
+
+document.getElementById("fecha").value = hoyISO();
+cargarProveedores();
+filtrarArticulos();
+pintarPedidos();
+</script>
+
+</body>
+</html>
