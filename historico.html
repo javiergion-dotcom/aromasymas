@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Histórico · Aromas y Más</title>
+
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f3efe9;color:#2b211b}
+header{background:linear-gradient(180deg,#7b5a46,#5d4333);color:white;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+h1{margin:0;font-size:24px}
+.volver{background:white;color:#5d4333;border:0;border-radius:999px;padding:10px 16px;font-weight:900}
+.contenedor{padding:18px;max-width:950px;margin:auto}
+.card{background:white;border-radius:24px;padding:20px;margin-bottom:18px;box-shadow:0 10px 24px rgba(0,0,0,.12)}
+label{font-weight:900;margin-top:12px;display:block}
+input,select{width:100%;padding:14px;border-radius:14px;border:1px solid #cfc7bf;font-size:16px;margin-top:6px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.botones{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+button{border:0;border-radius:16px;padding:14px 18px;font-size:16px;font-weight:900;color:white;background:#5d4333}
+.guardar{background:#5ca33f}
+.borrar{background:#c00000}
+.movimiento{border-left:7px solid #8c674d}
+.dato{font-weight:700;margin:4px 0;color:#333}
+.vacio{text-align:center;font-weight:900;color:#8c674d;padding:20px}
+.resumen{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.cajaResumen{background:white;border-radius:18px;padding:16px;text-align:center;font-weight:900;box-shadow:0 8px 18px rgba(0,0,0,.09)}
+.cajaResumen span{display:block;font-size:24px;color:#5d4333;margin-top:6px}
+@media(max-width:760px){
+.grid{grid-template-columns:1fr}
+.resumen{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>📁 Histórico</h1>
+<button class="volver" onclick="location.href='index.html'">VOLVER</button>
+</header>
+
+<div class="contenedor">
+
+<div class="resumen">
+<div class="cajaResumen">Registros<span id="totalRegistros">0</span></div>
+<div class="cajaResumen">Unidades<span id="totalUnidades">0</span></div>
+<div class="cajaResumen">Valor compra<span id="totalCompra">0,00 €</span></div>
+</div>
+
+<div class="card">
+<h2>Nuevo registro histórico</h2>
+
+<div class="grid">
+<div>
+<label>Fecha</label>
+<input id="fecha" type="date">
+</div>
+
+<div>
+<label>Producto</label>
+<input id="producto" placeholder="Nombre del producto">
+</div>
+</div>
+
+<div class="grid">
+<div>
+<label>Precio compra</label>
+<input id="precioCompra" type="number" step="0.01" placeholder="0.00">
+</div>
+
+<div>
+<label>Precio venta</label>
+<input id="precioVenta" type="number" step="0.01" placeholder="0.00">
+</div>
+</div>
+
+<label>Unidades</label>
+<input id="unidades" type="number" step="1" placeholder="0">
+
+<div class="botones">
+<button class="guardar" onclick="guardarRegistro()">GUARDAR</button>
+<button onclick="limpiarFormulario()">LIMPIAR</button>
+</div>
+</div>
+
+<div class="card">
+<h2>Buscar histórico</h2>
+
+<label>Buscar por producto</label>
+<input id="busqueda" placeholder="Escribe parte del nombre" oninput="pintarHistorico()">
+
+</div>
+
+<div class="card">
+<h2>Registros</h2>
+<div id="lista"></div>
+</div>
+
+</div>
+
+<script>
+let editandoId = null;
+
+function dinero(n){
+return Number(n || 0).toLocaleString("es-ES",{style:"currency",currency:"EUR"});
+}
+
+function hoyISO(){
+return new Date().toISOString().slice(0,10);
+}
+
+function leerHistorico(){
+return JSON.parse(localStorage.getItem("aromas_historico") || "[]");
+}
+
+function guardarHistorico(datos){
+localStorage.setItem("aromas_historico", JSON.stringify(datos));
+}
+
+function guardarRegistro(){
+
+const registro = {
+id: editandoId || Date.now(),
+fecha: document.getElementById("fecha").value || hoyISO(),
+producto: document.getElementById("producto").value.trim(),
+precioCompra: Number(document.getElementById("precioCompra").value || 0),
+precioVenta: Number(document.getElementById("precioVenta").value || 0),
+unidades: Number(document.getElementById("unidades").value || 0),
+fechaRegistro: new Date().toLocaleString("es-ES")
+};
+
+if(!registro.producto){
+alert("Pon el nombre del producto.");
+return;
+}
+
+if(registro.unidades <= 0){
+alert("Pon las unidades.");
+return;
+}
+
+let datos = leerHistorico();
+
+if(editandoId){
+datos = datos.map(r => r.id === editandoId ? registro : r);
+}else{
+datos.push(registro);
+}
+
+guardarHistorico(datos);
+limpiarFormulario();
+pintarHistorico();
+}
+
+function editarRegistro(id){
+
+const r = leerHistorico().find(x => x.id === id);
+if(!r) return;
+
+editandoId = id;
+
+document.getElementById("fecha").value = r.fecha || hoyISO();
+document.getElementById("producto").value = r.producto || "";
+document.getElementById("precioCompra").value = r.precioCompra || "";
+document.getElementById("precioVenta").value = r.precioVenta || "";
+document.getElementById("unidades").value = r.unidades || "";
+
+window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function borrarRegistro(id){
+
+if(!confirm("¿Borrar este registro?")) return;
+
+const datos = leerHistorico().filter(r => r.id !== id);
+guardarHistorico(datos);
+pintarHistorico();
+}
+
+function limpiarFormulario(){
+
+editandoId = null;
+
+document.getElementById("fecha").value = hoyISO();
+document.getElementById("producto").value = "";
+document.getElementById("precioCompra").value = "";
+document.getElementById("precioVenta").value = "";
+document.getElementById("unidades").value = "";
+}
+
+function pintarResumen(datos){
+
+const totalRegistros = datos.length;
+const totalUnidades = datos.reduce((s,r)=>s + Number(r.unidades || 0),0);
+const totalCompra = datos.reduce((s,r)=>s + (Number(r.precioCompra || 0) * Number(r.unidades || 0)),0);
+
+document.getElementById("totalRegistros").textContent = totalRegistros;
+document.getElementById("totalUnidades").textContent = totalUnidades;
+document.getElementById("totalCompra").textContent = dinero(totalCompra);
+}
+
+function pintarHistorico(){
+
+const lista = document.getElementById("lista");
+const buscar = (document.getElementById("busqueda").value || "").toLowerCase().trim();
+
+let datos = leerHistorico();
+
+if(buscar){
+datos = datos.filter(r => String(r.producto || "").toLowerCase().includes(buscar));
+}
+
+datos = datos.sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
+
+pintarResumen(datos);
+
+if(datos.length === 0){
+lista.innerHTML = "<div class='vacio'>No hay registros históricos.</div>";
+return;
+}
+
+lista.innerHTML = datos.map(r => {
+const totalCompra = Number(r.precioCompra || 0) * Number(r.unidades || 0);
+const totalVenta = Number(r.precioVenta || 0) * Number(r.unidades || 0);
+
+return `
+<div class="card movimiento">
+<h3>${r.producto}</h3>
+<div class="dato">📅 Fecha: ${r.fecha || ""}</div>
+<div class="dato">💶 Precio compra: ${dinero(r.precioCompra)}</div>
+<div class="dato">🏷️ Precio venta: ${dinero(r.precioVenta)}</div>
+<div class="dato">📦 Unidades: ${r.unidades || 0}</div>
+<div class="dato">🧾 Total compra: ${dinero(totalCompra)}</div>
+<div class="dato">💰 Total venta estimada: ${dinero(totalVenta)}</div>
+<div class="dato">Registro: ${r.fechaRegistro || ""}</div>
+
+<div class="botones">
+<button onclick="editarRegistro(${r.id})">EDITAR</button>
+<button class="borrar" onclick="borrarRegistro(${r.id})">BORRAR</button>
+</div>
+</div>
+`;
+}).join("");
+}
+
+limpiarFormulario();
+pintarHistorico();
+</script>
+
+</body>
+</html>
