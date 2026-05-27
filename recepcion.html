@@ -1,1 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recepción · Aromas y Más</title>
 
+<style>
+
+*{
+box-sizing:border-box;
+-webkit-tap-highlight-color:transparent;
+}
+
+body{
+margin:0;
+font-family:Arial,Helvetica,sans-serif;
+background:#f3efe9;
+color:#2b211b;
+}
+
+header{
+background:linear-gradient(180deg,#7b5a46 0%,#5d4333 100%);
+color:white;
+padding:16px 20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+h1{
+margin:0;
+font-size:24px;
+}
+
+.volver{
+background:white;
+color:#5d4333;
+border:0;
+border-radius:999px;
+padding:10px 16px;
+font-weight:900;
+cursor:pointer;
+}
+
+.contenedor{
+padding:18px;
+max-width:900px;
+margin:auto;
+}
+
+.card{
+background:white;
+border-radius:24px;
+padding:24px;
+margin-bottom:18px;
+box-shadow:0 10px 24px rgba(0,0,0,.12);
+}
+
+label{
+display:block;
+font-weight:900;
+margin-top:14px;
+}
+
+input{
+width:100%;
+padding:16px;
+border-radius:16px;
+border:1px solid #d8d0c8;
+margin-top:8px;
+font-size:16px;
+}
+
+button{
+border:0;
+border-radius:18px;
+padding:16px 20px;
+font-size:16px;
+font-weight:900;
+color:white;
+cursor:pointer;
+margin-top:18px;
+width:100%;
+}
+
+.buscar{
+background:#5d8091;
+}
+
+.guardar{
+background:#5ca33f;
+}
+
+.info{
+margin-top:14px;
+padding:18px;
+border-radius:18px;
+background:#f8f4ef;
+line-height:1.8;
+font-weight:700;
+}
+
+.estado{
+margin-top:18px;
+padding:14px;
+border-radius:16px;
+background:#f7f2ec;
+font-weight:900;
+text-align:center;
+color:#5d4333;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+
+<h1>📦 Recepción</h1>
+
+<button class="volver"
+onclick="location.href='index.html'">
+VOLVER
+</button>
+
+</header>
+
+<div class="contenedor">
+
+<div class="card">
+
+<label>Código de barras</label>
+
+<input
+id="codigo"
+placeholder="Escanea o escribe el código">
+
+<button class="buscar"
+onclick="buscarArticulo()">
+
+🔎 BUSCAR ARTÍCULO
+
+</button>
+
+<div class="info" id="infoArticulo">
+
+Esperando artículo...
+
+</div>
+
+<label>Cajas recibidas</label>
+
+<input
+id="cajas"
+type="number"
+placeholder="0">
+
+<label>Unidades sueltas</label>
+
+<input
+id="unidades"
+type="number"
+placeholder="0">
+
+<button class="guardar"
+onclick="guardarRecepcion()">
+
+✅ GUARDAR RECEPCIÓN
+
+</button>
+
+<div class="estado" id="estado">
+
+Sistema listo.
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+let articuloActual = null;
+
+function estado(texto){
+
+document.getElementById("estado").textContent = texto;
+
+}
+
+function leerArticulos(){
+
+return JSON.parse(
+localStorage.getItem("aromas_articulos") || "[]"
+);
+
+}
+
+function guardarArticulos(datos){
+
+localStorage.setItem(
+"aromas_articulos",
+JSON.stringify(datos)
+);
+
+}
+
+function buscarArticulo(){
+
+const codigo =
+document.getElementById("codigo")
+.value
+.trim();
+
+if(!codigo){
+
+alert("Introduce un código.");
+
+return;
+
+}
+
+const articulos = leerArticulos();
+
+const articulo =
+articulos.find(a =>
+String(a.codigo || "").trim() === codigo
+);
+
+if(!articulo){
+
+articuloActual = null;
+
+document.getElementById("infoArticulo")
+.innerHTML =
+"❌ Artículo no encontrado.";
+
+estado("Artículo no encontrado.");
+
+return;
+
+}
+
+articuloActual = articulo;
+
+document.getElementById("infoArticulo")
+.innerHTML =
+
+"<b>Artículo:</b> " +
+(articulo.nombre || "") +
+
+"<br><b>Stock actual:</b> " +
+(articulo.stock || 0) +
+
+"<br><b>Unidades por caja:</b> " +
+(articulo.unidadesCaja || 1);
+
+estado("Artículo encontrado.");
+
+}
+
+function guardarRecepcion(){
+
+if(!articuloActual){
+
+alert("Busca primero un artículo.");
+
+return;
+
+}
+
+const cajas =
+Number(
+document.getElementById("cajas").value || 0
+);
+
+const unidades =
+Number(
+document.getElementById("unidades").value || 0
+);
+
+const unidadesCaja =
+Number(
+articuloActual.unidadesCaja || 1
+);
+
+const total =
+(cajas * unidadesCaja) + unidades;
+
+let articulos =
+leerArticulos();
+
+articulos = articulos.map(a=>{
+
+if(a.codigo === articuloActual.codigo){
+
+a.stock =
+Number(a.stock || 0) + total;
+
+articuloActual = a;
+
+}
+
+return a;
+
+});
+
+guardarArticulos(articulos);
+
+document.getElementById("infoArticulo")
+.innerHTML =
+
+"<b>Artículo:</b> " +
+(articuloActual.nombre || "") +
+
+"<br><b>Nuevo stock:</b> " +
+(articuloActual.stock || 0);
+
+document.getElementById("cajas").value = "";
+document.getElementById("unidades").value = "";
+
+estado(
+"✅ Recepción guardada. +" +
+total +
+" unidades."
+);
+
+}
+
+</script>
+
+</body>
+</html>
