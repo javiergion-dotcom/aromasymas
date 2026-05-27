@@ -3,15 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Aromas y Más</title>
 
 <style>
-
-*{
-box-sizing:border-box;
--webkit-tap-highlight-color:transparent;
-}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 
 html,body{
 margin:0;
@@ -23,8 +18,6 @@ background:#f3efe9;
 overflow-x:hidden;
 }
 
-/* ===== HEADER ===== */
-
 header{
 background:linear-gradient(180deg,#7b5a46 0%,#5d4333 100%);
 color:white;
@@ -35,10 +28,7 @@ align-items:center;
 box-shadow:0 6px 14px rgba(0,0,0,.22);
 }
 
-.header-left{
-display:flex;
-flex-direction:column;
-}
+.header-left{display:flex;flex-direction:column}
 
 .titulo{
 font-size:28px;
@@ -53,12 +43,7 @@ margin-top:4px;
 font-weight:700;
 }
 
-#hora{
-font-size:16px;
-font-weight:700;
-}
-
-/* ===== FRANJA ===== */
+#hora{font-size:16px;font-weight:700}
 
 .franja{
 background:#ffffff;
@@ -69,16 +54,12 @@ color:#5d4333;
 border-bottom:1px solid rgba(0,0,0,.06);
 }
 
-/* ===== PANEL ===== */
-
 .panel{
 padding:26px;
 display:grid;
 grid-template-columns:repeat(3,1fr);
 gap:26px;
 }
-
-/* ===== BOTONES ===== */
 
 .boton{
 position:relative;
@@ -102,36 +83,18 @@ inset 0 -10px 18px rgba(0,0,0,.14),
 transition:all .08s ease;
 }
 
-.boton:active{
-transform:translateY(8px) scale(.96);
-}
+.boton:active{transform:translateY(8px) scale(.96)}
 
-.marron{
-background:linear-gradient(180deg,#b78b68 0%,#8c674d 100%);
-}
-
-.verde{
-background:linear-gradient(180deg,#89c768 0%,#5ca33f 100%);
-}
-
-.azul{
-background:linear-gradient(180deg,#8ab3c7 0%,#5d8091 100%);
-}
-
-.naranja{
-background:linear-gradient(180deg,#efb25d 0%,#d78a1e 100%);
-}
-
-.rojo{
-background:linear-gradient(180deg,#ff7676 0%,#c00000 100%);
-}
+.marron{background:linear-gradient(180deg,#b78b68 0%,#8c674d 100%)}
+.verde{background:linear-gradient(180deg,#89c768 0%,#5ca33f 100%)}
+.azul{background:linear-gradient(180deg,#8ab3c7 0%,#5d8091 100%)}
+.naranja{background:linear-gradient(180deg,#efb25d 0%,#d78a1e 100%)}
+.rojo{background:linear-gradient(180deg,#ff7676 0%,#c00000 100%)}
 
 .icono{
 font-size:46px;
 margin-bottom:14px;
 }
-
-/* ===== BLOQUE CENTRAL ===== */
 
 .bloque{
 width:92%;
@@ -168,10 +131,7 @@ font-weight:600;
 color:#333;
 }
 
-/* ===== RESPONSIVE ===== */
-
 @media(max-width:900px){
-
 .panel{
 grid-template-columns:repeat(2,1fr);
 gap:18px;
@@ -184,38 +144,22 @@ font-size:18px;
 border-radius:24px;
 }
 
-.icono{
-font-size:40px;
+.icono{font-size:40px}
+.nombre{font-size:34px}
+.frase{font-size:20px}
+.texto{font-size:16px}
 }
-
-.nombre{
-font-size:34px;
-}
-
-.frase{
-font-size:20px;
-}
-
-.texto{
-font-size:16px;
-}
-
-}
-
 </style>
 </head>
 
 <body>
 
 <header>
-
 <div class="header-left">
 <div class="titulo">Aromas y Más</div>
-<div class="sub">by · Javier Gión</div>
+<div class="sub">Val · Javier Gión</div>
 </div>
-
 <div id="hora"></div>
-
 </header>
 
 <div class="franja">
@@ -264,6 +208,11 @@ Todo el control de tu tienda, sin complicaciones.
 <div>HISTÓRICO</div>
 </div>
 
+<div class="boton azul" onclick="abrir('recepcion.html')">
+<div class="icono">📦</div>
+<div>RECEPCIÓN</div>
+</div>
+
 <div class="boton verde" onclick="abrir('copiaseguridad.html')">
 <div class="icono">💾</div>
 <div>COPIA SEGURIDAD</div>
@@ -272,40 +221,32 @@ Todo el control de tu tienda, sin complicaciones.
 </div>
 
 <div class="bloque">
-
-<div class="nombre">
-Aromas y Más
-</div>
+<div class="nombre">Aromas y Más</div>
 
 <div class="frase">
 La organización también puede ser sencilla.
 </div>
 
 <div class="texto">
-Controla artículos, pagos, pedidos y ventas de forma rápida y clara.
+Controla artículos, pagos, pedidos, ventas, recepción de mercancía y copias de seguridad de forma rápida y clara.
 Un sistema pensado para trabajar de manera cómoda, organizada y sin complicaciones.
 </div>
-
 </div>
 
 <script>
-
 function reloj(){
-
 const d = new Date();
 
 document.getElementById("hora").innerHTML =
 d.toLocaleDateString("es-ES") +
 " · " +
 d.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
-
 }
 
 setInterval(reloj,1000);
 reloj();
 
 function abrir(destino){
-
 try{
 if(navigator.vibrate){
 navigator.vibrate(20);
@@ -315,9 +256,7 @@ navigator.vibrate(20);
 setTimeout(function(){
 window.location.href = destino;
 },70);
-
 }
-
 </script>
 
 </body>
